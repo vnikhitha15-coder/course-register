@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { courseRouter } from './routes/course.routes.js';
 import { enrollmentRouter } from './routes/enrollment.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
+import { studentRouter } from './routes/student.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { AppError } from './utils/app-error.js';
 
@@ -43,6 +44,7 @@ app.get('/api/health', async (_req: Request, res: Response, next: NextFunction) 
 app.use('/api/auth', authRouter);
 app.use('/api/courses', courseRouter);
 app.use('/api/enrollments', enrollmentRouter);
+app.use('/api/student', studentRouter);
 app.use('/api/admin', adminRouter);
 
 // 404 Catch-All

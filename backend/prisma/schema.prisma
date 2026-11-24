@@ -12,30 +12,54 @@ enum Role {
   ADMIN
 }
 
+enum ExamType {
+  MIDTERM
+  FINAL
+  QUIZ
+  PRACTICAL
+  OTHER
+}
+
+enum AssignmentStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
 model User {
-  id           String       @id @default(uuid())
+  id           String              @id @default(uuid())
   name         String
-  email        String       @unique
+  email        String              @unique
   passwordHash String
-  role         Role         @default(STUDENT)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  role         Role                @default(STUDENT)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
   enrollments  Enrollment[]
+  assignments  StudentAssignment[]
 
   @@index([role])
 }
 
 model Course {
-  id          String       @id @default(uuid())
-  code        String       @unique
-  title       String
-  description String
-  credits     Int
-  instructor  String
-  capacity    Int
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  enrollments Enrollment[]
+  id                 String       @id @default(uuid())
+  code               String       @unique
+  title              String
+  description        String
+  credits            Int
+  instructor         String
+  capacity           Int
+  creditType         String       @default("Core") // Core, Elective, Lab, Seminar
+  term               String       @default("Fall 2026")
+  totalClasses       Int          @default(30)
+  completedClasses   Int          @default(0)
+  nextClassAt        DateTime?
+  nextClassLocation  String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  enrollments        Enrollment[]
+  exams              Exam[]
+  assignments        Assignment[]
 
   @@index([title])
 }
@@ -52,4 +76,60 @@ model Enrollment {
   @@unique([studentId, courseId])
   @@index([studentId])
   @@index([courseId])
+}
+
+model Exam {
+  id            String   @id @default(uuid())
+  courseId      String
+  title         String
+  examType      ExamType @default(MIDTERM)
+  startTime     DateTime
+  endTime       DateTime
+  location      String
+  syllabusNotes String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([startTime])
+}
+
+model Assignment {
+  id            String   @id @default(uuid())
+  courseId      String
+  title         String
+  description   String?
+  dueDate       DateTime
+  maxPoints     Int      @default(100)
+  weightPercent Float?
+  submissionUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  course      Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions StudentAssignment[]
+
+  @@index([courseId])
+  @@index([dueDate])
+}
+
+model StudentAssignment {
+  id           String           @id @default(uuid())
+  studentId    String
+  assignmentId String
+  status       AssignmentStatus @default(PENDING)
+  submittedAt  DateTime?
+  score        Float?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  student    User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, assignmentId])
+  @@index([studentId])
+  @@index([assignmentId])
+  @@index([status])
 }
